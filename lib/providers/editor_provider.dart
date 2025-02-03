@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/file_service.dart';
+import '../services/encoding_service.dart';
 
 class EditorProvider with ChangeNotifier {
   String _content = '';
   String? _currentFilePath;
   bool _isModified = false;
   List<String> _recentFiles = [];
+  FileEncoding _currentEncoding = FileEncoding.utf8;
   final String _recentFilesKey = 'recent_files';
   late SharedPreferences _prefs;
 
@@ -20,6 +22,9 @@ class EditorProvider with ChangeNotifier {
   String? get currentFilePath => _currentFilePath;
   bool get isModified => _isModified;
   List<String> get recentFiles => _recentFiles;
+  FileEncoding get currentEncoding => _currentEncoding;
+  String get currentEncodingName => EncodingService.getEncodingName(_currentEncoding);
+  List<FileEncoding> get supportedEncodings => EncodingService.supportedEncodings;
 
   Future<void> _loadRecentFiles() async {
     _prefs = await SharedPreferences.getInstance();
@@ -43,8 +48,10 @@ class EditorProvider with ChangeNotifier {
     try {
       final filePath = await FileService.openFile(context);
       if (filePath != null) {
-        _content = await FileService.readFile(filePath);
+        final (content, encoding) = await FileService.readFile(filePath);
+        _content = content;
         _currentFilePath = filePath;
+        _currentEncoding = encoding;
         _isModified = false;
         
         // Update recent files
@@ -69,7 +76,7 @@ class EditorProvider with ChangeNotifier {
     try {
       if (_currentFilePath != null) {
         // If we have a current file, save directly to it
-        await FileService.writeFile(_currentFilePath!, _content);
+        await FileService.writeFile(_currentFilePath!, _content, _currentEncoding);
         _isModified = false;
         notifyListeners();
         return true;
@@ -82,7 +89,7 @@ class EditorProvider with ChangeNotifier {
       );
 
       if (filePath != null) {
-        await FileService.writeFile(filePath, _content);
+        await FileService.writeFile(filePath, _content, _currentEncoding);
         _currentFilePath = filePath;
         _isModified = false;
 
@@ -113,7 +120,7 @@ class EditorProvider with ChangeNotifier {
       );
 
       if (filePath != null) {
-        await FileService.writeFile(filePath, _content);
+        await FileService.writeFile(filePath, _content, _currentEncoding);
         _currentFilePath = filePath;
         _isModified = false;
 
@@ -139,6 +146,7 @@ class EditorProvider with ChangeNotifier {
   Future<void> newFile() async {
     _content = '';
     _currentFilePath = null;
+    _currentEncoding = FileEncoding.utf8;
     _isModified = false;
     notifyListeners();
   }
@@ -152,8 +160,10 @@ class EditorProvider with ChangeNotifier {
   Future<bool> loadRecentFile(String filePath) async {
     try {
       if (await File(filePath).exists()) {
-        _content = await FileService.readFile(filePath);
+        final (content, encoding) = await FileService.readFile(filePath);
+        _content = content;
         _currentFilePath = filePath;
+        _currentEncoding = encoding;
         _isModified = false;
         notifyListeners();
         return true;
@@ -162,6 +172,14 @@ class EditorProvider with ChangeNotifier {
     } catch (e) {
       debugPrint('Error loading recent file: $e');
       return false;
+    }
+  }
+
+  void setEncoding(FileEncoding encoding) {
+    if (_currentEncoding != encoding) {
+      _currentEncoding = encoding;
+      _isModified = true;
+      notifyListeners();
     }
   }
 }

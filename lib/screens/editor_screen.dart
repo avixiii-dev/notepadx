@@ -6,6 +6,7 @@ import '../providers/theme_provider.dart';
 import '../widgets/editor_area.dart';
 import '../widgets/status_bar.dart';
 import '../widgets/recent_files_menu.dart';
+import '../services/encoding_service.dart';
 
 class EditorScreen extends StatelessWidget {
   const EditorScreen({super.key});
@@ -139,7 +140,7 @@ class EditorScreen extends StatelessWidget {
         ),
         actions: [
           PopupMenuButton<String>(
-            tooltip: 'File',
+            tooltip: 'File Menu',
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'new',
@@ -157,7 +158,7 @@ class EditorScreen extends StatelessWidget {
                   children: [
                     Icon(Icons.folder_open),
                     SizedBox(width: 8),
-                    Text('Open'),
+                    Text('Open...'),
                   ],
                 ),
               ),
@@ -213,6 +214,41 @@ class EditorScreen extends StatelessWidget {
                   );
                   break;
               }
+            },
+          ),
+          const SizedBox(width: 8),
+          Consumer<EditorProvider>(
+            builder: (context, provider, child) {
+              return PopupMenuButton<FileEncoding>(
+                tooltip: 'Encoding',
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.text_fields, size: 20),
+                      const SizedBox(width: 4),
+                      Text(provider.currentEncodingName),
+                    ],
+                  ),
+                ),
+                itemBuilder: (context) => provider.supportedEncodings
+                    .map(
+                      (encoding) => PopupMenuItem(
+                        value: encoding,
+                        child: Text(EncodingService.getEncodingName(encoding)),
+                      ),
+                    )
+                    .toList(),
+                onSelected: (encoding) {
+                  provider.setEncoding(encoding);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          'Changed encoding to ${EncodingService.getEncodingName(encoding)}'),
+                    ),
+                  );
+                },
+              );
             },
           ),
           IconButton(
