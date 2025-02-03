@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:path/path.dart' as path;
+import 'encoding_service.dart';
 
 class FileService {
   static const List<String> supportedExtensions = [
@@ -41,27 +42,31 @@ class FileService {
         suggestedName = path.basename(defaultPath);
       }
 
-      final FileSaveLocation? saveLocation = await getSaveLocation(
+      final FileSaveLocation? location = await getSaveLocation(
         suggestedName: suggestedName,
         acceptedTypeGroups: _typeGroups,
       );
 
-      return saveLocation?.path;
+      return location?.path;
     } catch (e) {
       debugPrint('Error saving file: $e');
       return null;
     }
   }
 
-  /// Reads the content of a file
-  static Future<String> readFile(String filePath) async {
+  /// Reads the content of a file with encoding detection
+  static Future<(String, FileEncoding)> readFile(String filePath) async {
     final file = File(filePath);
-    return await file.readAsString();
+    final bytes = await file.readAsBytes();
+    final encoding = EncodingService.detectEncoding(bytes);
+    final content = EncodingService.decodeBytes(bytes, encoding);
+    return (content, encoding);
   }
 
-  /// Writes content to a file
-  static Future<void> writeFile(String filePath, String content) async {
+  /// Writes content to a file with specified encoding
+  static Future<void> writeFile(String filePath, String content, FileEncoding encoding) async {
     final file = File(filePath);
-    await file.writeAsString(content);
+    final bytes = EncodingService.encodeString(content, encoding);
+    await file.writeAsBytes(bytes);
   }
 }
