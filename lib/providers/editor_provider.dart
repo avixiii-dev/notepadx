@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/file_service.dart';
 
 class EditorProvider with ChangeNotifier {
   String _content = '';
@@ -38,51 +39,100 @@ class EditorProvider with ChangeNotifier {
     }
   }
 
-  Future<void> loadFile(String filePath) async {
+  Future<bool> loadFile(BuildContext context) async {
     try {
-      final file = File(filePath);
-      _content = await file.readAsString();
-      _currentFilePath = filePath;
-      _isModified = false;
-      
-      // Update recent files
-      _recentFiles.remove(filePath);
-      _recentFiles.insert(0, filePath);
-      if (_recentFiles.length > 10) {
-        _recentFiles = _recentFiles.sublist(0, 10);
-      }
-      await _saveRecentFiles();
-      
-      notifyListeners();
-    } catch (e) {
-      throw Exception('Error loading file: $e');
-    }
-  }
-
-  Future<void> saveFile([String? filePath]) async {
-    try {
-      final targetPath = filePath ?? _currentFilePath;
-      if (targetPath == null) {
-        throw Exception('No file path specified');
-      }
-
-      final file = File(targetPath);
-      await file.writeAsString(_content);
-      _currentFilePath = targetPath;
-      _isModified = false;
-
-      // Update recent files
-      if (!_recentFiles.contains(targetPath)) {
-        _recentFiles.insert(0, targetPath);
+      final filePath = await FileService.openFile(context);
+      if (filePath != null) {
+        _content = await FileService.readFile(filePath);
+        _currentFilePath = filePath;
+        _isModified = false;
+        
+        // Update recent files
+        _recentFiles.remove(filePath);
+        _recentFiles.insert(0, filePath);
         if (_recentFiles.length > 10) {
           _recentFiles = _recentFiles.sublist(0, 10);
         }
         await _saveRecentFiles();
+        
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error loading file: $e');
+      return false;
+    }
+  }
+
+  Future<bool> saveFile(BuildContext context) async {
+    try {
+      if (_currentFilePath != null) {
+        // If we have a current file, save directly to it
+        await FileService.writeFile(_currentFilePath!, _content);
+        _isModified = false;
+        notifyListeners();
+        return true;
       }
 
-      notifyListeners();
+      // If no current file, ask for save location
+      final filePath = await FileService.saveFile(
+        context,
+        defaultPath: _currentFilePath,
+      );
+
+      if (filePath != null) {
+        await FileService.writeFile(filePath, _content);
+        _currentFilePath = filePath;
+        _isModified = false;
+
+        // Update recent files
+        if (!_recentFiles.contains(filePath)) {
+          _recentFiles.insert(0, filePath);
+          if (_recentFiles.length > 10) {
+            _recentFiles = _recentFiles.sublist(0, 10);
+          }
+          await _saveRecentFiles();
+        }
+
+        notifyListeners();
+        return true;
+      }
+      return false;
     } catch (e) {
-      throw Exception('Error saving file: $e');
+      debugPrint('Error saving file: $e');
+      return false;
+    }
+  }
+
+  Future<bool> saveFileAs(BuildContext context) async {
+    try {
+      final filePath = await FileService.saveFile(
+        context,
+        defaultPath: _currentFilePath,
+      );
+
+      if (filePath != null) {
+        await FileService.writeFile(filePath, _content);
+        _currentFilePath = filePath;
+        _isModified = false;
+
+        // Update recent files
+        if (!_recentFiles.contains(filePath)) {
+          _recentFiles.insert(0, filePath);
+          if (_recentFiles.length > 10) {
+            _recentFiles = _recentFiles.sublist(0, 10);
+          }
+          await _saveRecentFiles();
+        }
+
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error saving file: $e');
+      return false;
     }
   }
 
@@ -97,5 +147,21 @@ class EditorProvider with ChangeNotifier {
     _recentFiles.clear();
     _saveRecentFiles();
     notifyListeners();
+  }
+
+  Future<bool> loadRecentFile(String filePath) async {
+    try {
+      if (await File(filePath).exists()) {
+        _content = await FileService.readFile(filePath);
+        _currentFilePath = filePath;
+        _isModified = false;
+        notifyListeners();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error loading recent file: $e');
+      return false;
+    }
   }
 }
