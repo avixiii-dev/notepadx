@@ -7,6 +7,7 @@ import '../widgets/editor_area.dart';
 import '../widgets/status_bar.dart';
 import '../widgets/recent_files_menu.dart';
 import '../services/encoding_service.dart';
+import '../widgets/settings_dialog.dart';
 
 class EditorScreen extends StatelessWidget {
   const EditorScreen({super.key});
@@ -252,19 +253,23 @@ class EditorScreen extends StatelessWidget {
             },
           ),
           IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const SettingsDialog(),
+              );
+            },
+          ),
+          IconButton(
             icon: Icon(
               context.watch<ThemeProvider>().themeMode == ThemeMode.dark
-                ? Icons.light_mode
-                : Icons.dark_mode
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
             ),
-            tooltip: 'Toggle Theme',
             onPressed: () {
               final themeProvider = context.read<ThemeProvider>();
-              themeProvider.setThemeMode(
-                themeProvider.themeMode == ThemeMode.dark
-                  ? ThemeMode.light
-                  : ThemeMode.dark
-              );
+              themeProvider.toggleTheme();
             },
           ),
         ],
