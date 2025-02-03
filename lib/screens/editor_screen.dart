@@ -83,6 +83,16 @@ class EditorScreen extends StatelessWidget {
                     onPressed: () {
                       showDialog(
                         context: context,
+                        builder: (context) => const SearchDialog(),
+                      );
+                    },
+                    child: const Text('Find and Replace'),
+                    shortcut: const SingleActivator(LogicalKeyboardKey.keyF, control: true),
+                  ),
+                  MenuItemButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
                         builder: (context) => const SettingsDialog(),
                       );
                     },
