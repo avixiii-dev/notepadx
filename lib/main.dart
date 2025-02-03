@@ -4,19 +4,22 @@ import 'package:window_manager/window_manager.dart';
 import 'screens/editor_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/editor_provider.dart';
+import 'providers/settings_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
 
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(1200, 800),
+    size: Size(1024, 768),
+    minimumSize: Size(400, 300),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
+    titleBarStyle: TitleBarStyle.normal,
   );
 
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
   });
@@ -33,6 +36,7 @@ class NotepadX extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => EditorProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()..init()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

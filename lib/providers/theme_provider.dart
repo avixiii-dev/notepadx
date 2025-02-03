@@ -30,6 +30,11 @@ class ThemeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void toggleTheme() {
+    final newMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    setThemeMode(newMode);
+  }
+
   ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
