@@ -13,9 +13,9 @@ A modern, lightweight, and powerful text editor built with Flutter for Windows, 
 ### Roadmap
 
 #### Phase 1: Core File Operations
-- [ ] Open and save files with native file picker
-- [ ] Multiple file encodings (UTF-8, ANSI, Unicode)
-- [ ] Auto-save functionality
+- [x] Open and save files with native file picker
+- [x] Multiple file encodings (UTF-8, ANSI, Unicode)
+- [x] Auto-save functionality
 - [ ] Large file support (>1GB)
 - [ ] File export (PDF, Markdown, HTML)
 - [ ] Windows Explorer integration
