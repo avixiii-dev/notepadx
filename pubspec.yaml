@@ -31,17 +31,21 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.2
-  provider: ^6.0.5
+  provider: ^6.1.1
   window_manager: ^0.3.7
-  file_selector: ^1.0.3
+  file_selector: ^1.0.1
   path_provider: ^2.1.1
   shared_preferences: ^2.2.2
   path: ^1.8.3
+  pdf: ^3.10.7
+  markdown: ^7.1.1
+  html: ^0.15.4
+  printing: ^5.11.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^3.0.1
+  flutter_lints: ^2.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
