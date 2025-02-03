@@ -54,7 +54,7 @@ A modern, lightweight, and powerful text editor built with Flutter for Windows, 
 ### Installation
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/notepadx.git
+git clone https://github.com/avixiii-dev/notepadx.git
 ```
 
 2. Install dependencies
