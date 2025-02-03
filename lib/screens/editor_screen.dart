@@ -5,6 +5,7 @@ import '../widgets/recent_files_menu.dart';
 import '../widgets/settings_dialog.dart';
 import '../widgets/export_menu.dart';
 import '../widgets/status_bar.dart';
+import '../widgets/search_dialog.dart';
 
 class EditorScreen extends StatelessWidget {
   const EditorScreen({super.key});
@@ -54,13 +55,23 @@ class EditorScreen extends StatelessWidget {
                     onPressed: () {
                       showDialog(
                         context: context,
+                        builder: (context) => const SearchDialog(),
+                      );
+                    },
+                    child: const Text('Find and Replace'),
+                    shortcut: const SingleActivator(LogicalKeyboardKey.keyF, control: true),
+                  ),
+                  MenuItemButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
                         builder: (context) => const SettingsDialog(),
                       );
                     },
                     child: const Text('Settings'),
                   ),
                 ],
-                child: const Text('Tools'),
+                child: const Text('Edit'),
               ),
             ],
           ),
