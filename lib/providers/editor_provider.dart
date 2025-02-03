@@ -6,6 +6,7 @@ import '../services/file_service.dart';
 import '../services/encoding_service.dart';
 import '../services/auto_save_service.dart';
 import '../services/settings_service.dart';
+import '../services/history_service.dart';
 import 'package:path/path.dart' as path;
 
 class EditorProvider with ChangeNotifier {
@@ -18,6 +19,8 @@ class EditorProvider with ChangeNotifier {
   late SharedPreferences _prefs;
   late AutoSaveService _autoSaveService;
   late SettingsService _settingsService;
+  final _historyService = HistoryService();
+  int _cursorPosition = 0;
 
   EditorProvider() {
     _loadRecentFiles();
@@ -31,6 +34,8 @@ class EditorProvider with ChangeNotifier {
   FileEncoding get currentEncoding => _currentEncoding;
   String get currentEncodingName => EncodingService.getEncodingName(_currentEncoding);
   List<FileEncoding> get supportedEncodings => EncodingService.supportedEncodings;
+  bool get canUndo => _historyService.canUndo;
+  bool get canRedo => _historyService.canRedo;
 
   Future<void> _initServices() async {
     _settingsService = SettingsService();
@@ -50,9 +55,49 @@ class EditorProvider with ChangeNotifier {
 
   void updateContent(String newContent) {
     if (_content != newContent) {
+      // Save current state before updating
+      _historyService.pushState(HistoryState(
+        content: _content,
+        cursorPosition: _cursorPosition,
+      ));
+
       _content = newContent;
       _isModified = true;
       _autoSaveService.contentChanged();
+      notifyListeners();
+    }
+  }
+
+  void setCursorPosition(int position) {
+    _cursorPosition = position;
+  }
+
+  void undo() {
+    final currentState = HistoryState(
+      content: _content,
+      cursorPosition: _cursorPosition,
+    );
+
+    final previousState = _historyService.undo(currentState);
+    if (previousState != null) {
+      _content = previousState.content;
+      _cursorPosition = previousState.cursorPosition;
+      _isModified = true;
+      notifyListeners();
+    }
+  }
+
+  void redo() {
+    final currentState = HistoryState(
+      content: _content,
+      cursorPosition: _cursorPosition,
+    );
+
+    final nextState = _historyService.redo(currentState);
+    if (nextState != null) {
+      _content = nextState.content;
+      _cursorPosition = nextState.cursorPosition;
+      _isModified = true;
       notifyListeners();
     }
   }
@@ -72,6 +117,7 @@ class EditorProvider with ChangeNotifier {
         _currentEncoding = encoding;
         _isModified = false;
         _updateRecentFiles(filePath);
+        _historyService.clear(); // Clear history when loading new file
         notifyListeners();
         return true;
       }
@@ -140,6 +186,7 @@ class EditorProvider with ChangeNotifier {
     _currentFilePath = null;
     _isModified = false;
     _currentEncoding = FileEncoding.utf8;
+    _historyService.clear(); // Clear history for new file
     notifyListeners();
   }
 
@@ -162,6 +209,7 @@ class EditorProvider with ChangeNotifier {
       _currentEncoding = encoding;
       _isModified = false;
       _updateRecentFiles(filePath);
+      _historyService.clear(); // Clear history when opening recent file
       notifyListeners();
     } catch (e) {
       if (context.mounted) {
